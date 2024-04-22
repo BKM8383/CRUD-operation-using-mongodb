@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Management</title>
+</head>
+<body>
+<h1>User Management</h1>
+<h2>Add User</h2>
+<form id="addUserForm">
+<label for="name">Name:</label>
+<input type="text" id="name" name="name"><br><br>
+<label for="email">Email:</label>
+<input type="email" id="email" name="email"><br><br>
+<label for="password">Password:</label>
+<input type="password" id="password" name="password"><br><br>
+<button type="submit">Add User</button>
+</form>
+
+<h2>Users List</h2>
+<ul id="userList"></ul>
+
+<script>
+    const form = document.getElementById('addUserForm');
+    const userList = document.getElementById('userList');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const userData = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('/user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userData)
+        });
+        const newUser = await response.json();
+        displayUser(newUser);
+      } catch (error) {
+        console.error('Error adding user:', error);
+      }
+    });
+
+    function displayUser(user) {
+      const li = document.createElement('li');
+      li.textContent = `Name: ${user.name}, Email: ${user.email}`;
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`/user/${user._id}`, {
+            method: 'DELETE'
+          });
+          if (response.ok) {
+            li.remove(); 
+          } else {
+            console.error('Delete request failed');
+          }
+        } catch (error) {
+          console.error('Error deleting user:', error);
+        }
+      });
+
+      li.appendChild(deleteButton);
+      userList.appendChild(li);
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch('/user');
+        const users = await response.json();
+        users.forEach(displayUser);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    });
+  </script>
+</body>
+</html>
